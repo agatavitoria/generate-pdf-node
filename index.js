@@ -1,26 +1,40 @@
-var pdf = require('html-pdf');
-var ejs = require('ejs');
+const express = require("express");
+const app = express();
+const pdf = require("html-pdf");
+const ejs = require("ejs");
 
-var nomeDoUsuario = "Agata Lima";
-var curso = "Formação Node.js";
-var categoria = 'JavaScript';
+app.use(express.json());
 
-ejs.renderFile("./meuarquivo.ejs", {
-    nome: nomeDoUsuario,
-    curso: curso,
-    categoria: categoria,
-}, (err, html) => {
-    if (err) {
-        console.log('ERRO!');
-    } else {
+app.post("/create", function(req, res) {
+  const { nome, curso, categoria } = req.body;
 
-        pdf.create(html, {}).toFile("./meupdf.pdf", (err, res) => {
+  try {
+    ejs.renderFile(
+      "./meuarquivo.ejs",
+      { nome: nome, curso: curso, categoria: categoria },
+      (err, html) => {
+        if (err) {
+          throw new Error("Erro ao renderizar html");
+        } else {
+          pdf.create(html, {}).toFile("./contrato.pdf", (err, resul) => {
             if (err) {
-                console.log("UM ERRO ACONTECEU");
-            } else {
-                console.log(res);
+              throw new Error("Erro ao criar pdf");
             }
-        });
+          });
+        }
+      }
+    );
 
-    }
+    return res.json({
+      status: 1,
+      msg: "PDF criado"
+    });
+  } catch (err) {
+    return res.json({
+      status: 2,
+      msg: err.message
+    });
+  }
 });
+
+app.listen(3000);
